@@ -10,9 +10,12 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include "wiring_private.h"
 #include "../lmic.h"
 #include "hal.h"
 #include <stdio.h>
+
+SPIClass SPI1(&sercom1, 12, 13, 11, SPI_PAD_0_SCK_1, SERCOM_RX_PAD_3);
 
 // -----------------------------------------------------------------------------
 // I/O
@@ -74,17 +77,21 @@ static void hal_io_check() {
 // -----------------------------------------------------------------------------
 // SPI
 
-static const SPISettings settings(10E6, MSBFIRST, SPI_MODE0);
+static const SPISettings settings(8E6, MSBFIRST, SPI_MODE0);
 
 static void hal_spi_init () {
-    SPI.begin();
+    SPI1.begin();
+    pinPeripheral(11, PIO_SERCOM);
+    pinPeripheral(12, PIO_SERCOM);
+    pinPeripheral(13, PIO_SERCOM);
+
 }
 
 void hal_pin_nss (u1_t val) {
     if (!val)
-        SPI.beginTransaction(settings);
+        SPI1.beginTransaction(settings);
     else
-        SPI.endTransaction();
+        SPI1.endTransaction();
 
     //Serial.println(val?">>":"<<");
     digitalWrite(lmic_pins.nss, val);
@@ -92,7 +99,7 @@ void hal_pin_nss (u1_t val) {
 
 // perform SPI transaction with radio
 u1_t hal_spi (u1_t out) {
-    u1_t res = SPI.transfer(out);
+    u1_t res = SPI1.transfer(out);
 /*
     Serial.print(">");
     Serial.print(out, HEX);
